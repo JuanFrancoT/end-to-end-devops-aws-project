@@ -49,3 +49,43 @@ jobs:
           --cluster $ECS_CLUSTER \
           --service $ECS_SERVICE \
           --force-new-deployment
+
+        - name: Get current task definition
+      run: |
+        aws ecs describe-task-definition \
+          --task-definition devops-task \
+          --query taskDefinition > task-definition.json
+
+    - name: Clean task definition
+      run: |
+        jq 'del(
+          .taskDefinitionArn,
+          .revision,
+          .status,
+          .requiresAttributes,
+          .compatibilities,
+          .registeredAt,
+          .registeredBy
+        )' task-definition.json > clean-task-def.json
+
+    - name: Update image
+      run: |
+        jq --arg IMAGE "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:${{ github.sha }}" \
+        '.containerDefinitions[0].image = $IMAGE' \
+        clean-task-def.json > final-task-def.json
+
+    - name: Register new task definition
+      id: register-task
+      run: |
+        ARN=$(aws ecs register-task-definition \
+          --cli-input-json file://final-task-def.json \
+          --query 'taskDefinition.taskDefinitionArn' \
+          --output text)
+        echo "task_def_arn=$ARN" >> $GITHUB_OUTPUT
+
+    - name: Deploy new version
+      run: |
+        aws ecs update-service \
+          --cluster $ECS_CLUSTER \
+          --service $ECS_SERVICE \
+          --task-definition ${{ steps.register-task.outputs.task_def_arn }}

@@ -4,7 +4,7 @@ app = FastAPI()
 
 @app.get("/")
 def read_root():
-    return {"message": "CI/CD funcionando fixed ci-cd version"}
+    return {"message": "Test New Deployment"}
 
 @app.get("/health")
 def health():
