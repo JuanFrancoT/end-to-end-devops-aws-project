@@ -16,10 +16,20 @@ resource "aws_ecs_task_definition" "app" {
     {
       name  = "app"
       image = "739531857702.dkr.ecr.us-east-1.amazonaws.com/devops-app-repo:latest"
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          "awslogs-group"         = "/ecs/devops-app"
+          "awslogs-region"        = "us-east-1"
+          "awslogs-stream-prefix" = "ecs"
+        }
+      }
+
       portMappings = [
         {
           containerPort = 80
         }
+
       ]
     }
   ])
@@ -33,11 +43,11 @@ resource "aws_ecs_service" "app" {
   launch_type     = "FARGATE"
 
   network_configuration {
-    subnets         = [
+    subnets = [
       aws_subnet.public.id,
       aws_subnet.public_2.id
-  ]
-    security_groups = [aws_security_group.ecs_sg.id]
+    ]
+    security_groups  = [aws_security_group.ecs_sg.id]
     assign_public_ip = true
   }
 

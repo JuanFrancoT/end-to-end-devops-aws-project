@@ -3,9 +3,9 @@ resource "aws_lb" "app" {
   internal           = false
   load_balancer_type = "application"
 
-  subnets         = [
-      aws_subnet.public.id,
-      aws_subnet.public_2.id
+  subnets = [
+    aws_subnet.public.id,
+    aws_subnet.public_2.id
   ]
 
   security_groups = [aws_security_group.ecs_sg.id]
