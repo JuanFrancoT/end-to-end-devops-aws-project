@@ -6,8 +6,12 @@ from fastapi.responses import JSONResponse
 
 app = FastAPI()
 
-limiter = Limiter(key_func=get_remote_address)
+def get_real_ip(request: Request):
+    return request.headers.get("x-forwarded-for")
+
+limiter = Limiter(key_func=get_real_ip)
 app.state.limiter = limiter
+
 
 @app.exception_handler(RateLimitExceeded)
 def rate_limit_handler(request: Request, exc: RateLimitExceeded):
